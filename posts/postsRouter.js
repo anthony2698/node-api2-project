@@ -90,18 +90,31 @@ router.post("/:id/comments", (req, res) => {
 router.put("/:id", (req, res) => {
     const changes = req.body;
     if ( changes.title && changes.contents ) {
-        db.update(req.params.id, changes)
-            .then(count => {
-                if ( count === 1 ) {
-                    db.findById(req.params.id)
-                        .then(post => {
-                            res.status(200).json({ message: post });
-                        })
-                        .catch
+        db.findById(req.params.id)
+            .then(response => {
+                if ( response.length === 0 ) {
+                    res.status(404).json({ errorMessage: "The post with the specified ID does not exist." });
+                } else {
+                    db.update(req.params.id, changes)
+                    .then(count => {
+                        db.findById(req.params.id)
+                            .then(updatedPost => {
+                                res.status(200).json({ message: updatedPost })
+                            })
+                            .catch(error => {
+                                console.log(error);
+                            });
+                    })
+                    .catch(error => {
+                        res.status(500).json({ errorMessage: "The post informartion could not be updated."})
+                    })
                 }
             })
+            .catch(error => {
+                console.log(error);
+            });
     } else {
-
+        res.status(400).json({ errorMessage: "Please provide title and contents for the post." });
     }
 });
 
